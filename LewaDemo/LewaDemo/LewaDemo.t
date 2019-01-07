@@ -112,7 +112,7 @@ end
 //算法获取鼠标应该点击的坐标
 function calculateXY(xA, yA, xB, yB, r)
     //象限照样按正象限坐标
-    var quadrant = 0
+    var quadrant = 1
     
     
     //左上角第一象限,以B点为坐标中心,注意,屏幕坐标y轴朝下
@@ -161,7 +161,7 @@ end
 
 //以移动到锚点
 var moveThreadID = -1
-function moveToPoint(point)
+function moveToPoint()
     var isBreak = false
     //判断有几个锚点
     var anchorNum = 0
@@ -176,12 +176,11 @@ function moveToPoint(point)
     end
     var pointNumber = 0
     
-	if(0 == anchorNum)
+    //没有锚点不移动
+    if(0 == anchorNum)
         return
     end
-    if()
-    end
-       
+    
     while(flag)
         var point = "编辑框_锚点"&pointNumber
         var pointX = cdouble(编辑框获取文本(point&"x"))
@@ -200,7 +199,6 @@ function moveToPoint(point)
         lw.delay(200)
         
         if(x<0 || y<0)
-            //            列表框增加文本("列表框_状态框", "获取坐标错误,停止移动")
             列表框增加文本("列表框_状态框", "获取坐标错误,使用之前坐标点")
             //            return
         end
@@ -217,41 +215,7 @@ function moveToPoint(point)
         if(x<pointX+10 && x>pointX-10 && y<pointY+10 && y>pointY-10)
             列表框增加文本("列表框_状态框", "已到达"&point)
             pointNumber = (pointNumber+1)%anchorNum
-            break
         end
-        //        if((x-pointX) != 0)
-        //            
-        //        else
-        //            isBreak = true
-        //            //判断是否往上走,注意左上角为(0,0)
-        //            if(y > (pointY+10))
-        //                characterMove(1)
-        //                isBreak = false
-        //                //                列表框增加文本("列表框_状态框", "往上走,("&x&","&y&")"&"PY="&(pointY-10)&(y<(pointY-10)))
-        //            end
-        //            //判断是否往下走
-        //            if(y < (pointY-10))
-        //                characterMove(2)
-        //                //			列表框增加文本("列表框_状态框", "往下走,当前坐标:("&x&","&y&")")
-        //                isBreak = false
-        //            end
-        //            //判断是否往左走
-        //            if(x > (pointX+10))
-        //                characterMove(3)
-        //                //			列表框增加文本("列表框_状态框", "往左走,当前坐标:("&x&","&y&")")
-        //                isBreak = false
-        //            end
-        //            //判断是否往右走
-        //            if(x < (pointX-10))
-        //                characterMove(4)
-        //                //			列表框增加文本("列表框_状态框", "往右走,当前坐标:("&x&","&y&")")
-        //                isBreak = false
-        //            end
-        //            if(isBreak)
-        //                列表框增加文本("列表框_状态框", "已到达"&point)
-        //                break
-        //            end 
-        //        end
     end
     moveThreadID = -1
 end
@@ -271,25 +235,13 @@ function getAttackTarget()
     if("" != attach_target2)
         attach_target2 = "rc:"&attach_target2
         //        str = str&"|"&attach_target2&"1.bmp|"&attach_target2&"2.bmp|"&attach_target2&"3.bmp"
-        str = getrcpath(attach_target2&"1.bmp")&"|"&getrcpath(attach_target2&"2.bmp")&"|"&getrcpath(attach_target2&"3.bmp")
+        str = str&"|"&getrcpath(attach_target2&"1.bmp")&"|"&getrcpath(attach_target2&"2.bmp")&"|"&getrcpath(attach_target2&"3.bmp")
     end
     return str
 end
 
 //用于循环的攻击操作
 function option()
-    //判断有几个锚点
-    var anchorNum = 0
-    if(anchor0)
-        anchorNum = anchorNum+1
-    end
-    if(anchor1)
-        anchorNum = anchorNum+1
-    end
-    if(anchor2)
-        anchorNum = anchorNum+1
-    end
-    var pointNumber = 0
     //按下Tab切换目标
     var findNum = 0//记录寻找次数
     
@@ -297,14 +249,12 @@ function option()
         
         lw.SetWindowState(hwnd, 1)
         while(flag)
-            //如果找了5次没找到,判定附近没有怪,移动回锚点
-            if(findNum > 8 )
-                //如果有锚点,进行移动
-                if(0 != anchorNum && -1==moveThreadID)
-                    列表框增加文本("列表框_状态框", "开始返回锚点"&pointNumber)
-                    moveThreadID = threadbegin("moveToPoint", "编辑框_锚点"&pointNumber)
-                    //moveToPoint("编辑框_锚点"&pointNumber)
-                    pointNumber = (pointNumber+1)%anchorNum
+            //如果找了2次没找到,判定附近没有怪,移动回锚点
+            if(findNum > 2 )
+                if(-1 == moveThreadID)
+                    moveThreadID = threadbegin("moveToPoint", "")
+                else
+                    threadresume(moveThreadID)
                 end
                 findNum = 0
             end
@@ -316,6 +266,9 @@ function option()
             //如果找到了要攻击的目标,跳出循环
             if(1 == myFindPic(getAttackTarget()))
                 findNum = 0
+                if(-1 != moveThreadID)
+                    threadsuspend(moveThreadID)
+                end
                 break
             end
         end
@@ -323,7 +276,7 @@ function option()
         //按1,攻击
         lw.KeyPress(49)
         lw.delay(200)
-        //        lw.KeyPress(113)//F2
+        lw.KeyPress(113)//F2
         lw.delay(1000)
         lw.KeyPress(49)
         //捡拾物品
