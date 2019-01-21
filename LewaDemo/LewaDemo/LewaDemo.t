@@ -159,12 +159,18 @@ function calculateXY(xA, yA, xB, yB, r)
     
 end
 
+//获取下一个锚点,未完成
+function getNextAnchor(oldAnchor)
+    var anchorName = "编辑框_锚点"
+    
+end
+
 //以移动到锚点
 var moveThreadID = -1
 function moveToPoint()
     var isBreak = false
     //判断有几个锚点
-    var anchorNum = 0
+//    var anchorNum = 0
     if(anchor0)
         anchorNum = anchorNum+1
     end
@@ -181,25 +187,33 @@ function moveToPoint()
         return
     end
     
+    var x=-1, y=-1
+    var oldX=x, oldY=y
     while(flag)
         var point = "编辑框_锚点"&pointNumber
         var pointX = cdouble(编辑框获取文本(point&"x"))
         var pointY = cdouble(编辑框获取文本(point&"y"))
         
-        var x=-1, y=-1
-        var oldX=x, oldY=y
+        x=-1
+        y=-1
         //对比坐标,获取当前坐标
         lw.KeyPress(77)
         lw.delay(100)
         var picPath = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
         //精确度为0.5最佳
-        dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
-        //        dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, x, y)//西部专用
+        //        dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
+        dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, x, y)//西部专用
         lw.KeyPress(77)
         lw.delay(200)
         
+        if(x>=0 && y>=0)
+            oldX = x
+            oldY = y
+        end
         if(x<0 || y<0)
             列表框增加文本("列表框_状态框", "获取坐标错误,使用之前坐标点")
+            x = oldX
+            y = oldY
             //            return
         end
         
@@ -249,6 +263,14 @@ function option()
         
         lw.SetWindowState(hwnd, 1)
         while(flag)
+            //如果找到了要攻击的目标,跳出循环
+            if(1 == myFindPic(getAttackTarget()))
+                findNum = 0
+                if(-1 != moveThreadID)
+                    threadsuspend(moveThreadID)
+                end
+                break
+            end
             //如果找了2次没找到,判定附近没有怪,移动回锚点
             if(findNum > 2 )
                 if(-1 == moveThreadID)
@@ -263,14 +285,6 @@ function option()
             lw.KeyPress(52)//捡拾
             lw.delay(200)
             findNum = findNum+1
-            //如果找到了要攻击的目标,跳出循环
-            if(1 == myFindPic(getAttackTarget()))
-                findNum = 0
-                if(-1 != moveThreadID)
-                    threadsuspend(moveThreadID)
-                end
-                break
-            end
         end
         
         //按1,攻击
@@ -355,8 +369,8 @@ function myFindSelfXY(etX, etY)
     var currentX=-1, currentY=-1, n=0
     var picPath = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
     while(n<12)
-        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 2, currentX, currentY)
-        //        dm.FindPic(466,284,826,728,picPath , "000000", 0.5, 2, currentX, currentY)//西部专用
+        //        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 2, currentX, currentY)
+        dm.FindPic(466,284,826,728,picPath , "000000", 0.5, 2, currentX, currentY)//西部专用
         if(currentX>0 && currentY>0)
             编辑框设置文本(etX, currentX)
             编辑框设置文本(etY, currentY)
@@ -393,5 +407,62 @@ var anchor2=false
     if(1 == myFindSelfXY("编辑框_锚点2x", "编辑框_锚点2y"))
         anchor2 = true
     end
+结束
+
+
+var anchorXMap = array()
+var anchorYMap = array()
+var anchorNum = 1
+var anchorXName = "编辑框_锚点x"
+var anchorYName = "编辑框_锚点y"
+var anchorComboName = "下拉框_锚点集"
+功能 下拉框_锚点集_选择改变()
+    var str = 下拉框获取文本(anchorComboName)
+	编辑框设置文本(anchorXName, anchorXMap[下拉框获取文本(anchorComboName)])
+	编辑框设置文本(anchorYName, anchorYMap[下拉框获取文本(anchorComboName)])
+结束
+
+//添加x,y和下拉框新选项,并将下拉框设置为新选项
+功能 按钮_添加锚点_点击()
+    
+    //如果x,y坐标不为空
+    if(null != 编辑框获取文本(anchorXName) && null != 编辑框获取文本(anchorYName))
+        下拉框增加文本(anchorComboName, "锚点"&anchorNum)
+        arraypush(anchorXMap, 编辑框获取文本(anchorXName), "锚点"&anchorNum)
+        arraypush(anchorYMap, 编辑框获取文本(anchorYName), "锚点"&anchorNum)
+        //将下拉框设置为新选项
+        下拉框设置选项(anchorComboName, anchorNum-1)
+        anchorNum = anchorNum+1
+        
+        
+    end
+    
+    
+结束
+
+
+功能 按钮_获取坐标_点击()
+    
+	myFindSelfXY(anchorXName, anchorYName)
+
+结束
+
+//删除对应key的x,y,下拉框的项,锚点数减一,并更新编辑框和下拉框
+功能 按钮_删除锚点_点击()
+    arraydeletekey(anchorXMap, 下拉框获取文本(anchorComboName))
+    arraydeletekey(anchorYMap, 下拉框获取文本(anchorComboName))
+    下拉框删除选项文本("下拉框_锚点集", 下拉框获取选项(anchorComboName))
+	anchorNum = anchorNum-1
+
+	//更新
+    编辑框设置文本(anchorXName, "")
+    编辑框设置文本(anchorYName, "")
+    下拉框设置选项(anchorComboName, 0)
+结束
+
+//更新锚点,直接改变x.y值
+功能 按钮_更新锚点_点击()
+	anchorXMap[下拉框获取文本(anchorComboName)] = 编辑框获取文本(anchorXName)
+	anchorYMap[下拉框获取文本(anchorComboName)] = 编辑框获取文本(anchorYName)
 结束
 
