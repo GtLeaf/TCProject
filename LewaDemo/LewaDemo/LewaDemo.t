@@ -227,9 +227,14 @@ function moveToPoint()
         lw.delay(100)
         var picPath = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
         //精确度为0.5最佳
-//        dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
-        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, x, y)//银光湖
-        //        dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, x, y)//西部专用
+        if(单选框获取状态("单选框_西部巴达"))
+            dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, x, y)//西部专用
+        elseif(单选框获取状态("单选框_银光比特"))
+            dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, x, y)//银光湖
+		else
+			dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
+        end
+     
         lw.KeyPress(77)
         lw.delay(200)
         
@@ -298,6 +303,7 @@ function option()
         
         lw.SetWindowState(hwnd, 1)
         while(flag)
+            lw.KeyPress(9)
             //如果找到了要攻击的目标,跳出循环
             if(1 == myFindPic(getAttackTarget()))
                 findNum = 0
@@ -315,7 +321,7 @@ function option()
                 end
                 findNum = 0
             end
-            lw.KeyPress(9)
+            
             lw.delay(200)
             lw.KeyPress(52)//捡拾
             lw.delay(200)
@@ -325,22 +331,23 @@ function option()
         //按1,攻击
         lw.KeyPress(49)
         lw.delay(200)
-        lw.KeyPress(113)//F2
+        //        lw.KeyPress(113)//F2
         lw.delay(1000)
         lw.KeyPress(49)
         //捡拾物品
         lw.delay(200)
         lw.KeyPress(52)
-        lw.KeyPress(9)
-        lw.delay(1000)
+        lw.delay(500)
         lw.KeyPress(52)
-        lw.delay(1000)
+        lw.delay(500)
         lw.KeyPress(52)
-        lw.delay(1000)
+        lw.delay(500)
         lw.KeyPress(52)
-        lw.delay(1000)
-        lw.KeyPress(52)
-        lw.delay(1000)
+        lw.delay(500)
+        lw.delay(500)
+        lw.KeyPress(52)   
+        //        lw.KeyPress(52)
+        //        lw.delay(2000)
         
         lw.KeyPress(52)
         
@@ -372,7 +379,7 @@ var flag = false
 function myFindPicTest(pic)
     var x=-1, y=-1, n=0
     while(n<10)
-        dm.FindPic(324,168,956,804,pic, "000000", 0.5, 3, x, y)
+        dm.FindPic(324,168,956,804,pic, "000000", 0.5, 2, x, y)
         if(x>0 && y>0)
             lw.MoveTo(x,y)
             return 1
@@ -413,9 +420,17 @@ function myFindSelfXY(etX, etY)
     var currentX=-1, currentY=-1, n=0
     var picPath = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
     while(n<12)
-//        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 2, currentX, currentY)
-        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, currentX, currentY)//银光湖
+        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 2, currentX, currentY)
+        //        dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, currentX, currentY)//银光湖
         //        dm.FindPic(466,284,826,728,picPath , "000000", 0.5, 2, currentX, currentY)//西部专用
+        //精确度为0.5最佳
+        if(单选框获取状态("单选框_西部巴达"))
+            dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, currentX, currentY)//西部专用
+        elseif(单选框获取状态("单选框_银光比特"))
+            dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, currentX, currentY)//银光湖
+		else
+			dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, currentX, currentY)
+        end
         if(currentX>0 && currentY>0)
             编辑框设置文本(etX, currentX)
             编辑框设置文本(etY, currentY)
