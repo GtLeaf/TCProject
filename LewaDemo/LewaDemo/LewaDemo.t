@@ -16,7 +16,6 @@ function dllRegister()
         return
     end
     dm = com("dm.dmsoft")
-    //    dm.SetPath("d:\\Study\\TC\\LewaDemo\\pic")
 end
 
 //绑定窗口
@@ -202,11 +201,12 @@ var anchorComboName = "下拉框_锚点集"
     anchorYMap[下拉框获取文本(anchorComboName)] = 编辑框获取文本(anchorYName)
 结束
 
+
 //以移动到锚点
 var moveThreadID = -1
+var nextPoint = 0
 function moveToPoint()
     var isBreak = false
-    var pointNumber = 1
     
     //没有锚点不移动
     if(0 == anchorNum)
@@ -216,13 +216,13 @@ function moveToPoint()
     var x=-1, y=-1
     var oldX=x, oldY=y
     while(flag)
-        var point = "锚点"&pointNumber
+        var point = "锚点"&nextPoint
         var pointX = cdouble(anchorXMap[point])
         var pointY = cdouble(anchorYMap[point])
         
         x=-1
         y=-1
-        //对比坐标,获取当前坐标
+        //打开地图
         lw.KeyPress(77)
         lw.delay(100)
         var picPath = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
@@ -231,12 +231,12 @@ function moveToPoint()
             dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, x, y)//西部专用
         elseif(单选框获取状态("单选框_银光比特"))
             dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, x, y)//银光湖
-		else
-			dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
+        else
+            dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, x, y)
         end
-     
+        //关闭地图
         lw.KeyPress(77)
-        lw.delay(200)
+        lw.delay(100)
         
         if(x>=0 && y>=0)
             oldX = x
@@ -260,9 +260,10 @@ function moveToPoint()
         //                        列表框增加文本("列表框_状态框", "点击:("&moveX&","&moveY&")")
         if(x<pointX+10 && x>pointX-10 && y<pointY+10 && y>pointY-10)
             列表框增加文本("列表框_状态框", "已到达"&point)
-            pointNumber = (pointNumber+1)%anchorNum
+            nextPoint = (nextPoint+1)%anchorNum
         end
     end
+    //flag=false时,线程停止
     moveThreadID = -1
 end
 
@@ -294,6 +295,22 @@ function getAttackTarget()
     return str
 end
 
+
+//判断地图是否打开
+function judgeMapIsOpen()
+    var pic = getrcpath("rc:map1.bmp")&"|"&getrcpath("rc:map2.bmp")&"|"&getrcpath("rc:map3.bmp")
+    var x=-1, y=-1, n=0
+    while(n<2)
+        dm.FindPic(324,168,956,264,pic, "000000", 0.8, 2, x, y)
+        if(x>0 && y>0)
+            lw.MoveTo(x,y)
+            return true
+        end
+        n = n+1
+    end
+    return false
+end
+
 //用于循环的攻击操作
 function option()
     //按下Tab切换目标
@@ -303,28 +320,33 @@ function option()
         
         lw.SetWindowState(hwnd, 1)
         while(flag)
-            lw.KeyPress(9)
-            //如果找到了要攻击的目标,跳出循环
+            //如果找到了要攻击的目标,跳出循环,结束线程
             if(1 == myFindPic(getAttackTarget()))
                 findNum = 0
                 if(-1 != moveThreadID)
-                    threadsuspend(moveThreadID)
+                    threadclose(moveThreadID)
+                    moveThreadID = -1
+                    //如果地图打开了,则关闭地图
+                    if(judgeMapIsOpen())
+                        lw.KeyPress(77)
+                        lw.delay(100)
+                    end
                 end
                 break
             end
             //如果找了2次没找到,判定附近没有怪,移动回锚点
-            if(findNum > 2 )
+            if(findNum > 4 )
+                //防止开启多个线程
                 if(-1 == moveThreadID)
                     moveThreadID = threadbegin("moveToPoint", "")
-                else
-                    threadresume(moveThreadID)
                 end
                 findNum = 0
             end
             
-            lw.delay(200)
+            lw.delay(300)
             lw.KeyPress(52)//捡拾
-            lw.delay(200)
+            lw.delay(300)
+            lw.KeyPress(9)
             findNum = findNum+1
         end
         
@@ -344,6 +366,7 @@ function option()
         lw.delay(500)
         lw.KeyPress(52)
         lw.delay(500)
+        lw.KeyPress(9)
         lw.delay(500)
         lw.KeyPress(52)   
         //        lw.KeyPress(52)
@@ -396,7 +419,7 @@ end
     if("" == attach_target)
         return
     end
-    var str = getrcpath("rc:map_自己1.bmp")&"|"&getrcpath("rc:map_自己2.bmp")
+    var str = getrcpath("rc:map1.bmp")&"|"&getrcpath("rc:map2.bmp")&"|"&getrcpath("rc:map3.bmp")
     //	dm.SetPath("d:\\Study\\TC\\LewaDemo\\pic")
     //        var str = "map/自己1.bmp|map/自己2.bmp"
     //        if("" != attach_target2)
@@ -405,7 +428,11 @@ end
     
     //    messagebox(myFindPic("加鲁鲁兽1.bmp|加鲁鲁兽2.bmp|加鲁鲁兽3.bmp"))
     //    messagebox(myFindPic(str))
+    var x=-1,y=-1
+    
     messagebox(myFindPicTest(str))
+    //    dm.FindColor(0, 0, 2000, 2000, "7f5a54-000000|89625f-000000", 4, 0, 0, x, y)
+    //    messagebox(x, y)
     
 结束
 
@@ -428,8 +455,8 @@ function myFindSelfXY(etX, etY)
             dm.FindPic(466,284,826,728,picPath, "000000", 0.5, 2, currentX, currentY)//西部专用
         elseif(单选框获取状态("单选框_银光比特"))
             dm.FindPic(324,168,956,804,picPath , "000000", 0.5, 3, currentX, currentY)//银光湖
-		else
-			dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, currentX, currentY)
+        else
+            dm.FindPic(324,168,956,804,picPath, "000000", 0.5, 2, currentX, currentY)
         end
         if(currentX>0 && currentY>0)
             编辑框设置文本(etX, currentX)
